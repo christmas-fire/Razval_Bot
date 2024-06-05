@@ -18,3 +18,7 @@ def text_order_type_for_razval(type_order, username):
     text_1 = f"<b>Пользователь @{username} сделал заказ</b> \n\n"
     text_2 = f"<b>Тип работы</b>: {type_order}"
     return text_1 + text_2
+
+def text_order_details_for_user(details_order):
+    text = f"<b>Детали</b>: {details_order}. Вас понял! Чтобы перейти к последнему шагу, ответьте: есть ли у вас референсы?"
+    return text
