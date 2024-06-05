@@ -79,6 +79,17 @@ async def callback_start(callback: CallbackQuery):
     await callback.answer()
     
     
+    '''
+    ----------------------------------------------Поменять текст
+    '''
+@dp.message(Command(commands=["about"]))
+async def command_about(message: Message) -> None:
+    picture = FSInputFile("images/cat_about.jpg")
+    text = text_command_about()
+    
+    await message.answer_photo(picture, text, parse_mode=pm)
+    
+    
 async def main() -> None:
     await set_bot_commands(bot)
     await db_start()
