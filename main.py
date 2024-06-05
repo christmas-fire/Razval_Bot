@@ -5,7 +5,9 @@ import sys
 from os import getenv
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, html, types, F
-from aiogram.filters import Command
+from aiogram.filters import Command, StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import default_state
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.enums import ParseMode
 from aiogram.utils.media_group import MediaGroupBuilder
