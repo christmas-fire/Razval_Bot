@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, html, types, F
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state
-from aiogram.types import Message, CallbackQuery, FSInputFile
+from aiogram.fsm.state import StatesGroup, State, default_state
+from aiogram.types import Message, CallbackQuery, FSInputFile, InputMediaPhoto
 from aiogram.enums import ParseMode
 from aiogram.utils.media_group import MediaGroupBuilder
 
@@ -103,6 +103,12 @@ async def command_about(message: Message) -> None:
     await message.answer_photo(picture, text, parse_mode=pm)
     
     
+class Order(StatesGroup):
+    typing_type = State()
+    typing_details = State()
+    sending_references = State()
+    
+    
 @dp.message(Command(commands=["order"]))
 async def command_order(message: Message) -> None:
     picture = FSInputFile("images/cat_order.jpg")
@@ -111,22 +117,36 @@ async def command_order(message: Message) -> None:
     await message.answer_photo(picture, text, parse_mode=pm, reply_markup=inline_order())
     
     
-@dp.callback_query(F.data.startswith("order_")) 
-async def callback_order(callback: CallbackQuery):
-    action = callback.data.split("_")[1]
-    
-    if action == "start":
-        await callback.message.answer("Укажите тип своей работы")
-        @dp.message()
-        async def get_type_order(message: Message) -> None:
-            type_order = message.text
-            username = message.from_user.username
-            
-            await message.answer(text_order_type_for_user(type_order), parse_mode=pm)
-            await bot.send_message(chat_id=ADMIN, text=text_order_type_for_razval(type_order, username), parse_mode=pm)
-            
+@dp.callback_query(StateFilter(None), F.data == "order_start")
+async def callback_order_start(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("Укажите тип своей работы")
+    await state.set_state(Order.typing_type)
     await callback.answer()
+    
 
+@dp.message(Order.typing_type)
+async def get_type(message: Message, state: FSMContext) -> None:
+    type_order = message.text
+    username = message.from_user.username
+    
+    await message.answer(text_order_type_for_user(type_order), parse_mode=pm)
+    await bot.send_message(chat_id=ADMIN, text=text_order_type_for_razval(type_order, username), parse_mode=pm)
+    await state.set_state(Order.typing_details)
+    
+
+@dp.message(Order.typing_details)
+async def get_details(message: Message, state: FSMContext) -> None:
+    details_order = message.text
+    username = message.from_user.username
+    
+    await message.answer(text_order_details_for_user(details_order), parse_mode=pm, reply_markup=inline_order_details())
+    await state.set_state(Order.sending_references)
+    
+    
+@dp.callback_query(F.data == "order_without_references")
+async def callback_order_finish(callback: CallbackQuery, state: FSMContext) -> None:
+    pass
+    
 
 async def main() -> None:
     await set_bot_commands(bot)
