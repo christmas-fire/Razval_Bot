@@ -130,9 +130,8 @@ async def get_type(message: Message, state: FSMContext) -> None:
     username = message.from_user.username
     
     await message.answer(text_order_type_for_user(type_order), parse_mode=pm)
-    await bot.send_message(chat_id=ADMIN, text=text_order_type_for_razval(type_order, username), parse_mode=pm)
+    await bot.send_message(chat_id=RAZVAL, text=text_order_type_for_razval(type_order, username), parse_mode=pm)
     await state.set_state(Order.typing_details)
-    
 
 @dp.message(Order.typing_details)
 async def get_details(message: Message, state: FSMContext) -> None:
@@ -140,14 +139,15 @@ async def get_details(message: Message, state: FSMContext) -> None:
     username = message.from_user.username
     
     await message.answer(text_order_details_for_user(details_order), parse_mode=pm, reply_markup=inline_order_details())
+    await bot.send_message(chat_id=RAZVAL, text=text_order_details_for_razval(details_order, username), parse_mode=pm)
     await state.set_state(Order.sending_references)
-    
-    
+
 @dp.callback_query(F.data == "order_without_references")
 async def callback_order_finish(callback: CallbackQuery, state: FSMContext) -> None:
-    pass
-    
+    await callback.message.answer(text_order_finish())
+    await callback.answer()
 
+    
 async def main() -> None:
     await set_bot_commands(bot)
     await db_start()
