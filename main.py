@@ -10,9 +10,18 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.enums import ParseMode
 from aiogram.utils.media_group import MediaGroupBuilder
 
-from text_handler import *
+from start.inline_keyboard import *
+from start.text import *
+
+from gallery.inline_keyboard import *
+from gallery.text import *
+
+from about.text import *
+
+from order.inline_keyboard import *
+from order.text import *
+
 from default_commands import *
-from inline_handler import *
 from sql_handler import *
 
 load_dotenv()
@@ -100,12 +109,9 @@ async def command_order(message: Message) -> None:
     await message.answer_photo(picture, text, parse_mode=pm, reply_markup=inline_order())
     
     
-    
 @dp.callback_query(F.data.startswith("order_")) 
 async def callback_order(callback: CallbackQuery):
     action = callback.data.split("_")[1]
-    type = ""
-    details = ""
     
     if action == "start":
         await callback.message.answer("Укажите тип своей работы")
