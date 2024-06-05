@@ -38,3 +38,12 @@ def inline_gallery_if_draw() -> InlineKeyboardMarkup:
         ]
     )
     return kb
+
+
+def inline_order() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Сделать заказ", callback_data="order_start")]
+        ]
+    )
+    return kb

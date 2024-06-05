@@ -18,6 +18,8 @@ from sql_handler import *
 load_dotenv()
 
 TOKEN = getenv("TOKEN")
+ADMIN = getenv("ADMIN")
+RAZVAL = getenv("RAZVAL")
 
 bot = Bot(TOKEN)
 dp = Dispatcher()
@@ -90,6 +92,34 @@ async def command_about(message: Message) -> None:
     await message.answer_photo(picture, text, parse_mode=pm)
     
     
+@dp.message(Command(commands=["order"]))
+async def command_order(message: Message) -> None:
+    picture = FSInputFile("images/cat_order.jpg")
+    text = text_command_order()
+    
+    await message.answer_photo(picture, text, parse_mode=pm, reply_markup=inline_order())
+    
+    
+    
+@dp.callback_query(F.data.startswith("order_")) 
+async def callback_order(callback: CallbackQuery):
+    action = callback.data.split("_")[1]
+    type = ""
+    details = ""
+    
+    if action == "start":
+        await callback.message.answer("Укажите тип своей работы")
+        @dp.message()
+        async def get_type_order(message: Message) -> None:
+            type_order = message.text
+            username = message.from_user.username
+            
+            await message.answer(text_order_type_for_user(type_order), parse_mode=pm)
+            await bot.send_message(chat_id=ADMIN, text=text_order_type_for_razval(type_order, username), parse_mode=pm)
+            
+    await callback.answer()
+
+
 async def main() -> None:
     await set_bot_commands(bot)
     await db_start()
