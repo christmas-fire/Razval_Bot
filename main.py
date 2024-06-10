@@ -1,31 +1,19 @@
 import asyncio
 import logging
 import sys
-import datetime
 
 from os import getenv
 from dotenv import load_dotenv
-from aiogram import Bot, Dispatcher, html, types, F
-from aiogram.filters import Command, StateFilter
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State, default_state
-from aiogram.types import Message, CallbackQuery, FSInputFile
-from aiogram.enums import ParseMode
-from aiogram.utils.media_group import MediaGroupBuilder
+from aiogram import Bot, Dispatcher
 
-from start.inline_keyboard import *
-from start.text import *
-
-from gallery.inline_keyboard import *
-from gallery.text import *
-
-from about.text import *
-
-from order.inline_keyboard import *
-from order.text import *
+from start.handlers import router_start
+from gallery.handlers import router_gallery
+from about.handlers import router_about
+from order.handlers import router_order
 
 from default_commands import *
 from sql_handler import *
+from middleware import *
 
 load_dotenv()
 
@@ -35,166 +23,22 @@ RAZVAL = getenv("RAZVAL")
 
 bot = Bot(TOKEN)
 dp = Dispatcher()
-pm = ParseMode.HTML
 
-
-@dp.message(Command(commands=["start"]))
-async def command_start_handler(message: Message) -> None:
-    picture = FSInputFile("images/cat_start.jpg")
-    text = text_command_start()
-    
-    await message.answer_photo(picture, text, parse_mode=pm, reply_markup=inline_start())
-    await add_user(message.chat.id, message.from_user.username, message.from_user.first_name)
-    
-
-@dp.callback_query(F.data.startswith("start_"))
-async def callback_start(callback: CallbackQuery):
-    action = callback.data.split("_")[1]
-    text = text_inline_start_contacts()
-
-    if action == "contacts":
-        await callback.message.answer(text, parse_mode=pm, disable_web_page_preview=True)
-        
-    await callback.answer()
-    
-
-@dp.message(Command(commands=["gallery"]))
-async def command_gallery(message: Message) -> None:
-    picture = FSInputFile("images/cat_gallery.jpg")
-    text = text_command_gallery()
-    
-    await message.answer_photo(picture, text, parse_mode=pm, reply_markup=inline_gallery())
-    
-    
-@dp.callback_query(F.data.startswith("gallery_"))
-async def callback_start(callback: CallbackQuery):
-    action = callback.data.split("_")[1]
-    
-    if action == "tatoo":
-        album = MediaGroupBuilder(caption=text_inline_gallery_tatoo())
-        for i in range(1, 4):
-            album.add_photo(media=FSInputFile(f"images/gallery_tatoo_{i}.jpg"))
-
-        await callback.message.answer_media_group(media=album.build())
-        await callback.message.answer(reply_markup=inline_gallery_if_tatoo(), text="------")
-    
-    elif action == "draw":
-        album = MediaGroupBuilder(caption=text_inline_gallery_draw())
-        for i in range(1, 4):
-            album.add_photo(media=FSInputFile(f"images/gallery_draw_{i}.jpg"))
-
-        await callback.message.answer_media_group(media=album.build())
-        await callback.message.answer(reply_markup=inline_gallery_if_draw(), text="------")
-        
-    elif action == "back":
-        await command_gallery(callback.message)
-    
-    await callback.answer()
-    
-
-@dp.message(Command(commands=["about"]))
-async def command_about(message: Message) -> None:
-    picture = FSInputFile("images/cat_about.jpg")
-    text = text_command_about()
-
-    await message.answer_photo(picture, text, parse_mode=pm)
-    
-    
-class Order(StatesGroup):
-    typing_type = State()
-    typing_details = State()
-    sending_references = State()
-    waiting_for_references = State()
-    
-    
-@dp.message(Command(commands=["order"]))
-async def command_order(message: Message) -> None:
-    picture = FSInputFile("images/cat_order.jpg")
-    text = text_command_order()
-    
-    await message.answer_photo(picture, text, parse_mode=pm, reply_markup=inline_order())
-    
-    
-@dp.callback_query(StateFilter(None), F.data == "order_start")
-async def callback_order_start(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("Укажите тип своей работы")
-    await state.set_state(Order.typing_type)
-    await callback.answer()
-    
-
-@dp.message(Order.typing_type)
-async def get_type(message: Message, state: FSMContext) -> None:
-    type_order = message.text
-    username = message.from_user.username
-    
-    await message.answer(text_order_type_for_user(type_order), parse_mode=pm)
-    await bot.send_message(chat_id=RAZVAL, text=text_order_type_for_razval(type_order, username), parse_mode=pm)
-    await state.set_state(Order.typing_details)
-
-
-@dp.message(Order.typing_details)
-async def get_details(message: Message, state: FSMContext) -> None:
-    details_order = message.text
-    username = message.from_user.username
-    
-    await message.answer(text_order_details_for_user(details_order), parse_mode=pm, reply_markup=inline_order_details())
-    await bot.send_message(chat_id=RAZVAL, text=text_order_details_for_razval(details_order, username), parse_mode=pm)
-    await state.set_state(Order.sending_references)
-
-
-@dp.callback_query(F.data == "order_without_references")
-async def callback_order_finish_without_ref(callback: CallbackQuery, state: FSMContext) -> None:
-    await callback.message.answer(text_order_finish())
-    await callback.answer()
-
-
-@dp.callback_query(F.data == "order_with_references")
-async def callback_order_finish_with_ref(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("Пожалуйста, отправьте фотографии, которые хотите прикрепить к заказу.")
-    await state.set_state(Order.waiting_for_references)
-    await callback.answer()
-    
-
-@dp.message(Order.waiting_for_references, F.content_type == types.ContentType.PHOTO)
-async def handle_references(message: Message, state: FSMContext):
-    if message.photo:
-        data = await state.get_data()
-        photos = data.get('photos', [])
-        photos.append(message.photo[-1].file_id)
-        
-        await state.update_data(photos=photos)
-        await message.answer("Фото получено. Отправьте еще фото или введите /done для завершения.")
-        
-    else:
-        await message.answer("Пожалуйста, отправьте фотографию.")
-
-
-@dp.message(Order.waiting_for_references, Command(commands=["done"]))
-async def finish_references(message: Message, state: FSMContext):
-    data = await state.get_data()
-    photos = data.get('photos', [])
-    username = message.from_user.username
-    
-    if photos:
-        album = MediaGroupBuilder()
-        for file_id in photos:
-            album.add_photo(media=file_id)
-        
-        await bot.send_media_group(chat_id=RAZVAL, media=album.build())
-        await bot.send_message(chat_id=RAZVAL, text=text_order_references_for_razval(username), parse_mode=pm)
-        await message.answer(text_order_finish())
-    else:
-        await message.answer("Вы не прикрепили ни одной фотографии.")
-    
-    await state.clear()
-
+dp.message.outer_middleware(BanMiddleware())
     
 async def main() -> None:
+    dp.include_routers(router_start, router_gallery, router_about, router_order)
     await set_bot_commands(bot)
     await db_start()
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
+    """
+    Откючить логирование при деплое на сервер (замедляет работу бота)
+    """
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Exit")
