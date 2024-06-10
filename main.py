@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+import datetime
 
 from os import getenv
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ from aiogram import Bot, Dispatcher, html, types, F
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State, default_state
-from aiogram.types import Message, CallbackQuery, FSInputFile, InputMediaPhoto
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.enums import ParseMode
 from aiogram.utils.media_group import MediaGroupBuilder
 
@@ -49,12 +50,11 @@ async def command_start_handler(message: Message) -> None:
 @dp.callback_query(F.data.startswith("start_"))
 async def callback_start(callback: CallbackQuery):
     action = callback.data.split("_")[1]
-    
     text = text_inline_start_contacts()
 
     if action == "contacts":
         await callback.message.answer(text, parse_mode=pm, disable_web_page_preview=True)
-
+        
     await callback.answer()
     
 
@@ -91,15 +91,12 @@ async def callback_start(callback: CallbackQuery):
     
     await callback.answer()
     
-    
-    '''
-    ----------------------------------------------Поменять текст
-    '''
+
 @dp.message(Command(commands=["about"]))
 async def command_about(message: Message) -> None:
     picture = FSInputFile("images/cat_about.jpg")
     text = text_command_about()
-    
+
     await message.answer_photo(picture, text, parse_mode=pm)
     
     
@@ -107,6 +104,7 @@ class Order(StatesGroup):
     typing_type = State()
     typing_details = State()
     sending_references = State()
+    waiting_for_references = State()
     
     
 @dp.message(Command(commands=["order"]))
@@ -133,6 +131,7 @@ async def get_type(message: Message, state: FSMContext) -> None:
     await bot.send_message(chat_id=RAZVAL, text=text_order_type_for_razval(type_order, username), parse_mode=pm)
     await state.set_state(Order.typing_details)
 
+
 @dp.message(Order.typing_details)
 async def get_details(message: Message, state: FSMContext) -> None:
     details_order = message.text
@@ -142,10 +141,52 @@ async def get_details(message: Message, state: FSMContext) -> None:
     await bot.send_message(chat_id=RAZVAL, text=text_order_details_for_razval(details_order, username), parse_mode=pm)
     await state.set_state(Order.sending_references)
 
+
 @dp.callback_query(F.data == "order_without_references")
-async def callback_order_finish(callback: CallbackQuery, state: FSMContext) -> None:
+async def callback_order_finish_without_ref(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.message.answer(text_order_finish())
     await callback.answer()
+
+
+@dp.callback_query(F.data == "order_with_references")
+async def callback_order_finish_with_ref(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("Пожалуйста, отправьте фотографии, которые хотите прикрепить к заказу.")
+    await state.set_state(Order.waiting_for_references)
+    await callback.answer()
+    
+
+@dp.message(Order.waiting_for_references, F.content_type == types.ContentType.PHOTO)
+async def handle_references(message: Message, state: FSMContext):
+    if message.photo:
+        data = await state.get_data()
+        photos = data.get('photos', [])
+        photos.append(message.photo[-1].file_id)
+        
+        await state.update_data(photos=photos)
+        await message.answer("Фото получено. Отправьте еще фото или введите /done для завершения.")
+        
+    else:
+        await message.answer("Пожалуйста, отправьте фотографию.")
+
+
+@dp.message(Order.waiting_for_references, Command(commands=["done"]))
+async def finish_references(message: Message, state: FSMContext):
+    data = await state.get_data()
+    photos = data.get('photos', [])
+    username = message.from_user.username
+    
+    if photos:
+        album = MediaGroupBuilder()
+        for file_id in photos:
+            album.add_photo(media=file_id)
+        
+        await bot.send_media_group(chat_id=RAZVAL, media=album.build())
+        await bot.send_message(chat_id=RAZVAL, text=text_order_references_for_razval(username), parse_mode=pm)
+        await message.answer(text_order_finish())
+    else:
+        await message.answer("Вы не прикрепили ни одной фотографии.")
+    
+    await state.clear()
 
     
 async def main() -> None:
