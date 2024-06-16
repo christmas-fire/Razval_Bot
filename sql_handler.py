@@ -18,17 +18,6 @@ async def db_start() -> None:
         name TEXT)
         """
     )
-
-    cur.execute(
-        """CREATE TABLE IF NOT EXISTS orders(
-        id_order INTEGER PRIMARY KEY AUTOINCREMENT,
-        id INTEGER,
-        date DATETIME,
-        type TEXT,
-        details TEXT)
-        """
-    )
-    
     db.commit()
     
 async def add_user(id, username, name) -> None:
@@ -48,10 +37,3 @@ async def get_users() -> list:
     users = cur.execute(f"SELECT id FROM users").fetchall()
     db.commit()
     return users
-
-async def add_order(id, date, order_type, details) -> None:
-    order = cur.execute(f"SELECT 1 FROM orders WHERE id == {id}").fetchone()
-    if not order:
-        cur.execute("INSERT INTO orders (id, date, type, details) VALUES(?, ?, ?, ?)", 
-                    (id, date, order_type, details))
-        db.commit()
