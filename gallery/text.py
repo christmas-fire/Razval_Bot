@@ -1,4 +1,4 @@
-def text_command_gallery():
+def text_command_gallery() -> str:
     """
     Текст для команды /gallery
     """
@@ -6,7 +6,7 @@ def text_command_gallery():
     return text
 
 
-def text_inline_gallery_tatoo():
+def text_inline_gallery_tatoo() -> str:
     """
     Подпись к альбому эскизов
     """
@@ -14,7 +14,7 @@ def text_inline_gallery_tatoo():
     return text
 
 
-def text_inline_gallery_draw():
+def text_inline_gallery_draw() -> str:
     """
     Подпись к альбому рисунков
     """
