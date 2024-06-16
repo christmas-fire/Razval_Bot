@@ -11,7 +11,12 @@ pm = ParseMode.HTML
 
 @router_about.message(Command(commands=["about"]))
 async def command_about(message: Message) -> None:
+    """
+    Обработчик команды /about
+    """
     picture = FSInputFile("images/cat_about.jpg")
     text = text_command_about()
 
-    await message.answer_photo(picture, text, parse_mode=pm)
+    await message.answer_photo(picture,
+                               text,
+                               parse_mode=pm)
