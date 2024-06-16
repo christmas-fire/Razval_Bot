@@ -3,6 +3,7 @@ from datetime import datetime
 
 current_time = datetime.now().replace(microsecond=0)
 
+
 async def db_start() -> None:
     global db, cur
     
@@ -11,7 +12,8 @@ async def db_start() -> None:
 
     cur.execute(
         """CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY,
+        id_user INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER,
         username TEXT,
         name TEXT)
         """
@@ -19,18 +21,37 @@ async def db_start() -> None:
 
     cur.execute(
         """CREATE TABLE IF NOT EXISTS orders(
-        order_id INTEGER PRIMARY KEY,
-        user_id INTEGER,
+        id_order INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER,
         date DATETIME,
-        FOREIGN KEY (user_id) REFERENCES users (id))
+        type TEXT,
+        details TEXT)
         """
     )
     
     db.commit()
     
-async def add_user(id, username, name):
+async def add_user(id, username, name) -> None:
+    """
+    Добавляет пользователя в таблицу, если такого пользователя еще нет в таблице
+    """
     user = cur.execute(f"SELECT 1 FROM users WHERE id == {id}").fetchone()
     if not user:
-        cur.execute("INSERT INTO users VALUES(?, ?, ?)",
+        cur.execute("INSERT INTO users (id, username, name) VALUES(?, ?, ?)",
                     (id, username, name))
+        db.commit()
+        
+async def get_users() -> list:
+    """
+    Возвращает список кортежей (один кортеж - это один id-шник)
+    """
+    users = cur.execute(f"SELECT id FROM users").fetchall()
+    db.commit()
+    return users
+
+async def add_order(id, date, order_type, details) -> None:
+    order = cur.execute(f"SELECT 1 FROM orders WHERE id == {id}").fetchone()
+    if not order:
+        cur.execute("INSERT INTO orders (id, date, type, details) VALUES(?, ?, ?, ?)", 
+                    (id, date, order_type, details))
         db.commit()

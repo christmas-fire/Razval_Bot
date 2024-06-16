@@ -3,7 +3,6 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 
 banned_users = [
-    1187852992,
     627148614, # whyhwahee
     719571990, # AnotherPumpkin
     1979214166 # horisana
