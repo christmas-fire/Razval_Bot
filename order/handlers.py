@@ -1,5 +1,6 @@
 from os import getenv
 from dotenv import load_dotenv
+from datetime import datetime
 
 from aiogram import Bot, F, Router
 from aiogram.filters import Command, StateFilter
@@ -11,6 +12,7 @@ from aiogram.utils.media_group import MediaGroupBuilder
 
 from order.text import *
 from order.inline_keyboard import *
+from sql_handler import *
 
 load_dotenv()
 
@@ -35,7 +37,10 @@ async def command_order(message: Message) -> None:
     picture = FSInputFile("images/cat_order.jpg")
     text = text_command_order()
     
-    await message.answer_photo(picture, text, parse_mode=pm, reply_markup=inline_order())
+    await message.answer_photo(picture,
+                               text,
+                               parse_mode=pm,
+                               reply_markup=inline_order())
     
     
 @router_order.callback_query(StateFilter(None), F.data == "order_start")
@@ -49,9 +54,15 @@ async def callback_order_start(callback: CallbackQuery, state: FSMContext):
 async def get_type(message: Message, state: FSMContext) -> None:
     type_order = message.text
     username = message.from_user.username
+    id = message.from_user.id
+    date = datetime.now().replace(microsecond=0)
     
-    await message.answer(text_order_type_for_user(type_order), parse_mode=pm)
-    await bot.send_message(chat_id=ADMIN, text=text_order_type_for_razval(type_order, username), parse_mode=pm)
+    await message.answer(text_order_type_for_user(type_order),
+                         parse_mode=pm)
+    await bot.send_message(chat_id=ADMIN,
+                           text=text_order_type_for_razval(type_order, username),
+                           parse_mode=pm)
+    await add_order(id, date)
     await state.set_state(Order.typing_details)
 
 
@@ -60,8 +71,12 @@ async def get_details(message: Message, state: FSMContext) -> None:
     details_order = message.text
     username = message.from_user.username
     
-    await message.answer(text_order_details_for_user(details_order), parse_mode=pm, reply_markup=inline_order_details())
-    await bot.send_message(chat_id=ADMIN, text=text_order_details_for_razval(details_order, username), parse_mode=pm)
+    await message.answer(text_order_details_for_user(details_order),
+                         parse_mode=pm,
+                         reply_markup=inline_order_details())
+    await bot.send_message(chat_id=ADMIN,
+                           text=text_order_details_for_razval(details_order, username),
+                           parse_mode=pm)
     await state.set_state(Order.sending_references)
 
 
@@ -103,8 +118,11 @@ async def finish_references(message: Message, state: FSMContext):
         for file_id in photos:
             album.add_photo(media=file_id)
         
-        await bot.send_media_group(chat_id=ADMIN, media=album.build())
-        await bot.send_message(chat_id=ADMIN, text=text_order_references_for_razval(username), parse_mode=pm)
+        await bot.send_media_group(chat_id=ADMIN,
+                                   media=album.build())
+        await bot.send_message(chat_id=ADMIN,
+                               text=text_order_references_for_razval(username),
+                               parse_mode=pm)
         await message.answer(text_order_finish())
     else:
         await message.answer("Вы не прикрепили ни одной фотографии.")
