@@ -25,7 +25,8 @@ bot = Bot(TOKEN)
 dp = Dispatcher()
 
 dp.message.outer_middleware(BanMiddleware())
-    
+
+
 async def main() -> None:
     dp.include_routers(router_start, router_gallery, router_about, router_order)
     await set_bot_commands(bot)
@@ -35,7 +36,7 @@ async def main() -> None:
 
 if __name__ == "__main__":
     """
-    Откючить логирование при деплое на сервер (замедляет работу бота)
+    Отключить логирование при выгрузке на сервер (замедляет работу бота)
     """
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     try:
