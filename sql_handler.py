@@ -1,12 +1,12 @@
 import sqlite3 as sq
-from datetime import datetime
-
-current_time = datetime.now().replace(microsecond=0)
 
 
 async def db_start() -> None:
+    """
+    Создание и запуск БД
+    """
     global db, cur
-    
+
     db = sq.connect("RazvalBot.db")
     cur = db.cursor()
 
@@ -19,20 +19,26 @@ async def db_start() -> None:
         """
     )
     db.commit()
-    
-async def add_user(id, username, name) -> None:
+
+
+async def add_user(user_id, username, name) -> None:
     """
     Добавляет пользователя в таблицу, если такого пользователя еще нет в таблице
+
+    :param user_id: id пользователя в telegram
+    :param username: Имя пользователя в telegram
+    :param name: Имя пользователя в telegram (first name)
     """
-    user = cur.execute(f"SELECT 1 FROM users WHERE id == {id}").fetchone()
+    user = cur.execute(f"SELECT 1 FROM users WHERE id == {user_id}").fetchone()
     if not user:
         cur.execute("INSERT INTO users (id, username, name) VALUES(?, ?, ?)",
-                    (id, username, name))
+                    (user_id, username, name))
         db.commit()
-        
+
+
 async def get_users() -> list:
     """
-    Возвращает список кортежей (один кортеж - это один id-шник)
+    Возвращает список кортежей (один кортеж - это один id пользователя)
     """
     users = cur.execute(f"SELECT id FROM users").fetchall()
     db.commit()
