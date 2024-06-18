@@ -17,6 +17,6 @@ def text_inline_start_contacts() -> str:
     Текст для инлайн кнопок, прикрепленных к сообщению команды /start
     """
     text = (f"<b>Мои контакты</b> 👇🏻\n\n"
-            f"🔘 <a href='https://t.me/razvalol' target='_self'>Перейти в тг</a>\n"
-            f"🔘 <a href='https://vk.com/razzvalll' target='_self'>Перейти в вк</a>")
+            f"- <a href='https://t.me/razvalol' target='_self'>Перейти в тг</a>\n"
+            f"- <a href='https://vk.com/razzvalll' target='_self'>Перейти в вк</a>")
     return text
