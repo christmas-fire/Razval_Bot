@@ -2,11 +2,12 @@ from typing import Callable, Dict, Any, Awaitable
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 
-banned_users = [
-    627148614,  # whyhwahee
-    719571990,  # AnotherPumpkin
-    1979214166  # horisana
-]
+
+banned_users = {
+    627148614: 'whyhwahee',
+    719571990: 'AnotherPumpkin',
+    1979214166: 'horisana'
+}
 
 
 def is_banned(user_id) -> bool:

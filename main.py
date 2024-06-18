@@ -10,6 +10,7 @@ from start.handlers import router_start
 from gallery.handlers import router_gallery
 from about.handlers import router_about
 from order.handlers import router_order
+from admin.handlers import router_admin
 
 from default_commands import *
 from sql_handler import *
@@ -28,7 +29,11 @@ dp.message.outer_middleware(BanMiddleware())
 
 
 async def main() -> None:
-    dp.include_routers(router_start, router_gallery, router_about, router_order)
+    dp.include_routers(router_start,
+                       router_gallery,
+                       router_about,
+                       router_order,
+                       router_admin)
     await set_bot_commands(bot)
     await db_start()
     await dp.start_polling(bot)

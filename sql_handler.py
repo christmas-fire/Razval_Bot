@@ -1,15 +1,13 @@
 import sqlite3 as sq
 
+db = sq.connect("RazvalBot.db")
+cur = db.cursor()
+
 
 async def db_start() -> None:
     """
     Создание и запуск БД
     """
-    global db, cur
-
-    db = sq.connect("RazvalBot.db")
-    cur = db.cursor()
-
     cur.execute(
         """CREATE TABLE IF NOT EXISTS users(
         id_user INTEGER PRIMARY KEY AUTOINCREMENT,
