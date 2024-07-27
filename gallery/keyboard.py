@@ -31,14 +31,14 @@ def keyboard_gallery_tatoo() -> ReplyKeyboardMarkup:
     return kb
 
 
-def keyborad_gallery_draw() -> ReplyKeyboardMarkup:
+def keyboard_gallery_draw() -> ReplyKeyboardMarkup:
     """
     Если пользователь нажал на кнопку ["🎨 Рисунки"], появляется эта клавиатура
     """
     kb = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="↩️ Вернуться"),
-             KeyboardButton(text="🖊 Эскизы татуировок")]
+            [KeyboardButton(text="🖊 Эскизы татуировок"),
+             KeyboardButton(text="↩️ Вернуться")]
         ],
         input_field_placeholder="Выберите",
         resize_keyboard=True

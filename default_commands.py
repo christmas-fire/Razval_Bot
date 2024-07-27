@@ -6,8 +6,8 @@ async def set_bot_commands(bot: Bot):
     my_commands = [
         BotCommand(command="start", description="🚀 Перезапуск бота на стартовую позицию"),
         BotCommand(command="gallery", description="✏️ Посмотреть примеры моих работ"),
-        BotCommand(command="about", description="🎀 Кое-что обо мне"),
         BotCommand(command="order", description="💸 Сделать заказ")
+        # BotCommand(command="sit_on_face", description="🦶 Сесть мне на лицо")
     ]
     
     await bot.set_my_commands(

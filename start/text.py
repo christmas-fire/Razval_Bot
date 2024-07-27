@@ -20,3 +20,4 @@ def text_inline_start_contacts() -> str:
             f"- <a href='https://t.me/razvalol' target='_self'>Перейти в тг</a>\n"
             f"- <a href='https://vk.com/razzvalll' target='_self'>Перейти в вк</a>")
     return text
+# todo: проверить и поменять текст в команде /start

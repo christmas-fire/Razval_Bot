@@ -9,7 +9,7 @@ def inline_start() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [InlineKeyboardButton(text="📞 Мои контакты",
                                   callback_data="start_contacts")],
-            [InlineKeyboardButton(text="📎 Сайт с примерами работ",
+            [InlineKeyboardButton(text="📎 Мой сайт",
                                   url="https://ru.pinterest.com/pin/280700989269081408/")]
         ]
     )

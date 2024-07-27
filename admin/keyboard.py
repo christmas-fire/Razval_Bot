@@ -7,7 +7,8 @@ def keyboard_admin() -> ReplyKeyboardMarkup:
     """
     kb = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="💬 Рассылка"), KeyboardButton(text="🐔 Заблокированные пользователи")]
+            [KeyboardButton(text="💬 Рассылка"), KeyboardButton(text="🐔 Заблокированные пользователи")],
+            [KeyboardButton(text="👤 Список пользователей"), KeyboardButton(text="📚 Список заказов")]
         ],
         input_field_placeholder="Выберите",
         resize_keyboard=True

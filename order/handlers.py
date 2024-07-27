@@ -1,7 +1,8 @@
-from os import getenv
-from dotenv import load_dotenv
+import os
+import dotenv
 
 from aiogram import Bot, F, Router
+from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -12,13 +13,15 @@ from aiogram.utils.media_group import MediaGroupBuilder
 from order.text import *
 from order.inline_keyboard import *
 
-load_dotenv()
+from sql_handler import *
 
-TOKEN = getenv("TOKEN")
-ADMIN = getenv("ADMIN")
-RAZVAL = getenv("RAZVAL")
+dotenv.load_dotenv()
+TOKEN = os.getenv("TOKEN")
+ADMIN = os.getenv("ADMIN")
+RAZVAL = os.getenv("RAZVAL")
 
-bot = Bot(TOKEN)
+# bot = Bot(TOKEN)
+bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 router_order = Router()
 pm = ParseMode.HTML
 
@@ -38,13 +41,18 @@ async def command_order_handler(message: Message) -> None:
     """
     Обработчик команды /order
     """
+    await message.delete()
     picture = FSInputFile("images/cat_order.jpg")
     text = text_command_order()
 
     await message.answer_photo(picture,
                                text,
-                               parse_mode=pm,
                                reply_markup=inline_order())
+    await add_order(message.chat.id,
+                    message.from_user.username,
+                    message.from_user.first_name)
+    await bot.send_message(chat_id=ADMIN,
+                           text=f"🧑‍💻 Пользователь @{message.from_user.username} начал делать заказ!")
 
 
 @router_order.callback_query(StateFilter(None), F.data == "order_start")
@@ -64,8 +72,7 @@ async def command_order_callback_get_type(message: Message, state: FSMContext) -
     """
     type_order = message.text
     await state.update_data(type_order=type_order)
-    await message.answer(text_order_get_details(),
-                         parse_mode=pm)
+    await message.answer(text_order_get_details())
     await state.set_state(Order.typing_details)
 
 
@@ -78,7 +85,6 @@ async def command_order_callback_get_details(message: Message, state: FSMContext
     await state.update_data(details_order=details_order)
 
     await message.answer(text_order_get_references(),
-                         parse_mode=pm,
                          reply_markup=inline_order_is_references())
     await state.set_state(Order.sending_references)
 
@@ -95,8 +101,7 @@ async def command_order_callback_finish_no_ref(callback: CallbackQuery, state: F
     username = callback.from_user.username
 
     await bot.send_message(chat_id=RAZVAL,
-                           text=text_order_summary(username, type_order, details_order),
-                           parse_mode=pm)
+                           text=text_order_summary(username, type_order, details_order))
     await callback.message.answer(text_order_finish())
     await state.clear()
     await callback.answer()
@@ -125,7 +130,6 @@ async def command_order_callback_handle_ref(message: Message, state: FSMContext)
         await state.update_data(photos=photos)
         await message.answer(f"Фото получено.\n"
                              f"Отправьте еще фото или введите /done для завершения.")
-
     else:
         await message.answer(f"Пожалуйста, отправьте фотографию.")
 
@@ -148,11 +152,9 @@ async def command_order_callback_finish_with_ref_end(message: Message, state: FS
             album.add_photo(media=file_id)
 
         await bot.send_message(chat_id=RAZVAL,
-                               text=text_order_summary(username, type_order, details_order),
-                               parse_mode=pm)
+                               text=text_order_summary(username, type_order, details_order))
         await bot.send_message(chat_id=RAZVAL,
-                               text=text_order_references_for_razval_(username),
-                               parse_mode=pm)
+                               text=text_order_references_for_razval_(username))
         await bot.send_media_group(chat_id=RAZVAL,
                                    media=album.build())
         await message.answer(text_order_finish())

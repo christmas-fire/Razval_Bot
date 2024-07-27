@@ -1,6 +1,6 @@
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery, FSInputFile
+from aiogram.types import Message, FSInputFile
 from aiogram.enums import ParseMode
 from aiogram.utils.media_group import MediaGroupBuilder
 
@@ -19,10 +19,9 @@ async def command_gallery_handler(message: Message) -> None:
     await message.delete()
     picture = FSInputFile("images/cat_gallery.jpg")
     text = text_command_gallery()
-    
+
     await message.answer_photo(picture,
                                text,
-                               parse_mode=pm,
                                reply_markup=keyboard_gallery())
 
 
@@ -35,10 +34,9 @@ async def command_gallery_tatoo(message: Message) -> None:
 
     await message.answer_media_group(media=album.build())
     await message.answer(reply_markup=keyboard_gallery_tatoo(),
-                                text=text_inline_gallery_tatoo())
-    
-    
-    
+                         text=text_inline_gallery_tatoo())
+
+
 @router_gallery.message(lambda message: message.text == "🎨 Рисунки")
 async def command_gallery_tatoo(message: Message) -> None:
     await message.delete()
@@ -47,11 +45,10 @@ async def command_gallery_tatoo(message: Message) -> None:
         album.add_photo(media=FSInputFile(f"images/gallery_draw_{i}.jpg"))
 
     await message.answer_media_group(media=album.build())
-    await message.answer(reply_markup=keyborad_gallery_draw(),
-                                    text=text_inline_gallery_draw())
-    
-    
-    
+    await message.answer(reply_markup=keyboard_gallery_draw(),
+                         text=text_inline_gallery_draw())
+
+
 @router_gallery.message(lambda message: message.text == "↩️ Вернуться")
 async def command_gallery_tatoo(message: Message) -> None:
     await command_gallery_handler(message)
