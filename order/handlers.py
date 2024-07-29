@@ -60,7 +60,9 @@ async def command_order_callback_start(callback: CallbackQuery, state: FSMContex
     """
     Устанавливает рабочее состояние заказа (получение типа)
     """
-    await callback.message.answer(text_order_get_type())
+    text = text_order_get_type()
+
+    await callback.message.answer(text)
     await state.set_state(Order.typing_type)
     await callback.answer()
 
@@ -71,8 +73,10 @@ async def command_order_callback_get_type(message: Message, state: FSMContext) -
     Получает тип заказа от пользователя и сохраняет эти данные -> переключает состояние (получение деталей)
     """
     type_order = message.text
+    text = text_order_get_details()
+
     await state.update_data(type_order=type_order)
-    await message.answer(text_order_get_details())
+    await message.answer(text)
     await state.set_state(Order.typing_details)
 
 
@@ -82,9 +86,10 @@ async def command_order_callback_get_details(message: Message, state: FSMContext
     Получает детали заказа от пользователя и сохраняет эти данные -> переключает состояние (есть ли референсы?)
     """
     details_order = message.text
-    await state.update_data(details_order=details_order)
+    text = text_order_get_references()
 
-    await message.answer(text_order_get_references(),
+    await state.update_data(details_order=details_order)
+    await message.answer(text,
                          reply_markup=inline_order_is_references())
     await state.set_state(Order.sending_references)
 
@@ -96,9 +101,9 @@ async def command_order_callback_finish_no_ref(callback: CallbackQuery, state: F
      и отправляет их админу/владельцу бота, завершает заказ
     """
     data = await state.get_data()
+    username = callback.from_user.username
     type_order = data.get('type_order')
     details_order = data.get('details_order')
-    username = callback.from_user.username
 
     await bot.send_message(chat_id=RAZVAL,
                            text=text_order_summary(username, type_order, details_order))
@@ -129,7 +134,7 @@ async def command_order_callback_handle_ref(message: Message, state: FSMContext)
 
         await state.update_data(photos=photos)
         await message.answer(f"Фото получено.\n"
-                             f"Отправьте еще фото или введите /done для завершения.")
+                             f"Отправьте еще фото или введите /done для завершения заказа.")
     else:
         await message.answer(f"Пожалуйста, отправьте фотографию.")
 
@@ -151,14 +156,14 @@ async def command_order_callback_finish_with_ref_end(message: Message, state: FS
         for file_id in photos:
             album.add_photo(media=file_id)
 
+        await message.answer(text_order_finish())
+
         await bot.send_message(chat_id=RAZVAL,
                                text=text_order_summary(username, type_order, details_order))
         await bot.send_message(chat_id=RAZVAL,
                                text=text_order_references_for_razval_(username))
         await bot.send_media_group(chat_id=RAZVAL,
                                    media=album.build())
-        await message.answer(text_order_finish())
     else:
         await message.answer(f"Вы не прикрепили ни одной фотографии.")
-
     await state.clear()

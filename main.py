@@ -8,8 +8,6 @@ import dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import Command
-from aiogram import types
 
 from start.handlers import router_start
 from gallery.handlers import router_gallery
@@ -23,21 +21,10 @@ from middleware import *
 
 dotenv.load_dotenv()
 TOKEN = os.getenv("TOKEN")
-ADMIN = os.getenv("ADMIN")
-RAZVAL = os.getenv("RAZVAL")
 
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 dp.message.outer_middleware(BanMiddleware())
-
-
-@dp.message(Command(commands=["sit_on_face"]))
-async def sit_on_face(message: types.Message) -> None:
-    await message.answer("Спасибо госпожа 🙏🏻")
-    await bot.send_message(chat_id=RAZVAL,
-                           text=f"Пользователь @{message.from_user.username} сел мне на лицо..")
-    await bot.send_message(chat_id=ADMIN,
-                           text=f"Пользователь @{message.from_user.username} сел мне на лицо..")
 
 
 async def main() -> None:

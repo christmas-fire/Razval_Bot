@@ -7,10 +7,12 @@ def inline_start() -> InlineKeyboardMarkup:
     """
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
+            [InlineKeyboardButton(text="💸 Сделать заказ",
+                                  callback_data="order_start")],
             [InlineKeyboardButton(text="📞 Мои контакты",
                                   callback_data="start_contacts")],
-            [InlineKeyboardButton(text="📎 Мой сайт",
-                                  url="https://ru.pinterest.com/pin/280700989269081408/")]
+            # [InlineKeyboardButton(text="📎 Мой сайт",
+            #                       url="https://ru.pinterest.com/pin/280700989269081408/")],
         ]
     )
     return kb
